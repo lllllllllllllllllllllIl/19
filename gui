@@ -1,5 +1,5 @@
 --========================================================--
--- LOAD LINORIA
+-- LOAD LINORIA (Obsidian)
 --========================================================--
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
@@ -24,7 +24,7 @@ local Tabs = {
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
-local OffenseGroup = Tabs.Practical:AddLeftGroupbox("Offense1")
+local OffenseGroup = Tabs.Practical:AddLeftGroupbox("Offense")
 
 --========================================================--
 -- AUTO GREEN TOGGLE
@@ -40,10 +40,9 @@ OffenseGroup:AddToggle("AutoGreen", {
 repeat task.wait() until game:IsLoaded()
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
-
 local powerValue = player:WaitForChild("Backpack"):WaitForChild("ActionValues"):WaitForChild("Power")
+
 local previousPower = powerValue.Value
 local hasTriggered = false
 local shotType = nil
@@ -73,7 +72,7 @@ local __namecall
 __namecall = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
-   
+
     if method == "FireServer" and #args >= 2 then
         if args[1] == true then
             if args[3] and type(args[3]) == "string" and shotTargetPower[args[3]] then
@@ -102,10 +101,10 @@ powerValue.Changed:Connect(function(newValue)
 
     local increasing = newValue > previousPower
     local currentShot = shotType or dunkType
-   
+
     if currentShot and not hasTriggered and increasing and currentEvent then
         local target = shotTargetPower[currentShot]
-       
+
         if newValue >= target then
             hasTriggered = true
             if dunkType then
@@ -115,150 +114,40 @@ powerValue.Changed:Connect(function(newValue)
             end
         end
     end
-   
+
     if newValue < previousPower and newValue <= 20 then
         shotType = nil
         dunkType = nil
         hasTriggered = false
         currentEvent = nil
     end
+
     previousPower = newValue
 end)
 
 --========================================================--
 -- UI SETTINGS
 --========================================================--
---========================================================--
--- LOAD LINORIA
---========================================================--
-local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
-local Options = Library.Options
-local Toggles = Library.Toggles
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 
---========================================================--
--- WINDOW + TABS
---========================================================--
-local Window = Library:CreateWindow({
-    Title = "Vision Hub",
-    Footer = "Pratical System",
-    Icon = 95816097006870,
-    NotifySide = "Right",
-    ShowCustomCursor = true,
-})
-
-local Tabs = {
-    Practical = Window:AddTab("Practical", "activity"),
-    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
-}
-
-local PracticalGroup = Tabs.Practical:AddLeftGroupbox("Practical Settings")
-
---========================================================--
--- AUTO GREEN TOGGLE
---========================================================--
-PracticalGroup:AddToggle("AutoGreen", {
-    Text = "Auto Green",
-    Default = false,
-})
-
---========================================================--
--- SERVICES + SETUP
---========================================================--
-repeat task.wait() until game:IsLoaded()
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
-
-local powerValue = player:WaitForChild("Backpack"):WaitForChild("ActionValues"):WaitForChild("Power")
-local previousPower = powerValue.Value
-local hasTriggered = false
-local shotType = nil
-local dunkType = nil
-local currentEvent = nil
-
--- PERFECT GREEN POWER VALUES
-local shotTargetPower = {
-    ["Standing Shot"] = 70.75,
-    ["Moving Shot"] = 66,
-    ["Close Floater"] = 68,
-    ["Floater"] = 68,
-    ["Layup"] = 66,
-    ["Standing Layup"] = 64.75,
-    ["Reverse Layup"] = 64.75,
-    ["Close Layup"] = 66,
-    ["Moving Dunk"] = 66,
-    ["Standing Dunk"] = 66,
-    ["Close Post Fade"] = 68.75,
-    ["Post Fade"] = 68.75,
-}
-
---========================================================--
--- AUTO GREEN LOGIC
---========================================================--
-local __namecall
-__namecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local args = {...}
-    local method = getnamecallmethod()
-   
-    if method == "FireServer" and #args >= 2 then
-        if args[1] == true then
-            if args[3] and type(args[3]) == "string" and shotTargetPower[args[3]] then
-                shotType = args[3]
-                dunkType = nil
-                hasTriggered = false
-                previousPower = powerValue.Value
-                currentEvent = self
-            elseif args[2] and type(args[2]) == "string" and shotTargetPower[args[2]] then
-                dunkType = args[2]
-                shotType = nil
-                hasTriggered = false
-                previousPower = powerValue.Value
-                currentEvent = self
-            end
-        end
-    end
-    return __namecall(self, ...)
-end)
-
-powerValue.Changed:Connect(function(newValue)
-    if not Toggles.AutoGreen.Value then
-        previousPower = newValue
-        return
-    end
-
-    local increasing = newValue > previousPower
-    local currentShot = shotType or dunkType
-   
-    if currentShot and not hasTriggered and increasing and currentEvent then
-        local target = shotTargetPower[currentShot]
-       
-        if newValue >= target then
-            hasTriggered = true
-            if dunkType then
-                currentEvent:FireServer(false, dunkType, 1)
-            elseif shotType then
-                currentEvent:FireServer(false, "Shooting", shotType)
-            end
-        end
-    end
-   
-    if newValue < previousPower and newValue <= 20 then
-        shotType = nil
-        dunkType = nil
-        hasTriggered = false
-        currentEvent = nil
-    end
-    previousPower = newValue
-end)
-
---========================================================--
--- UI SETTINGS
---========================================================--
 MenuGroup:AddLabel("Menu bind")
-:AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
-MenuGroup:AddButton("Unload", function() Library:Unload() end)
+    :AddKeyPicker("MenuKeybind", {
+        Default = "LeftControl",
+        NoUI = true,
+        Text = "Menu keybind"
+    })
+
+MenuGroup:AddButton("Unload", function()
+    Library:Unload()
+end)
+
 Library.ToggleKeybind = Library.Options.MenuKeybind
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+ThemeManager:SetFolder("VisionHub")
+SaveManager:SetFolder("VisionHub/configs")
+SaveManager:BuildConfigSection(Tabs["UI Settings"])
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
