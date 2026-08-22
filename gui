@@ -52,7 +52,7 @@ local currentEvent = nil
 -- PERFECT GREEN POWER VALUES
 local shotTargetPower = {
     ["Standing Shot"] = 67,
-    ["Moving Shot"] = 69,
+    ["Moving Shot"] = 65,
     ["Close Floater"] = 67,
     ["Floater"] = 67,
     ["Layup"] = 66,
