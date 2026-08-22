@@ -51,18 +51,18 @@ local currentEvent = nil
 
 -- PERFECT GREEN POWER VALUES
 local shotTargetPower = {
-    ["Standing Shot"] = 70.75,
-    ["Moving Shot"] = 66,
-    ["Close Floater"] = 68,
-    ["Floater"] = 68,
+    ["Standing Shot"] = 69,
+    ["Moving Shot"] = 69,
+    ["Close Floater"] = 67,
+    ["Floater"] = 67,
     ["Layup"] = 66,
-    ["Standing Layup"] = 64.75,
-    ["Reverse Layup"] = 64.75,
-    ["Close Layup"] = 66,
-    ["Moving Dunk"] = 66,
-    ["Standing Dunk"] = 66,
-    ["Close Post Fade"] = 68.75,
-    ["Post Fade"] = 68.75,
+    ["Standing Layup"] = 66,
+    ["Reverse Layup"] = 67.5,
+    ["Close Layup"] = 68,
+    ["Moving Dunk"] = 67.5,
+    ["Standing Dunk"] = 67.5,
+    ["Close Post Fade"] = 71,
+    ["Post Fade"] = 71
 }
 
 --========================================================--
