@@ -7,7 +7,6 @@ local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 local Options = Library.Options
 local Toggles = Library.Toggles
-
 --========================================================--
 -- WINDOW + TABS
 --========================================================--
@@ -16,55 +15,57 @@ local Window = Library:CreateWindow({
     Footer = "Vision System",
     Icon = 95816097006870,
     NotifySide = "Right",
-    ShowCustomCursor = false,
+    ShowCustomCursor = true,
 })
-
 local Tabs = {
     Practical = Window:AddTab("Offense", "activity"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
-
 local OffenseGroup = Tabs.Practical:AddLeftGroupbox("Offense")
-
 --========================================================--
--- AUTO GREEN TOGGLE
+-- AUTO GREEN TOGGLE + OFFSET SLIDER
 --========================================================--
 OffenseGroup:AddToggle("AutoGreen", {
     Text = "Auto Green",
     Default = false,
 })
-
+OffenseGroup:AddSlider("Offset", {
+    Text = "Offset",
+    Default = -0,
+    Min = -10,
+    Max = 20,
+    Rounding = 0,
+})
 --========================================================--
 -- SERVICES + SETUP
 --========================================================--
 repeat task.wait() until game:IsLoaded()
-
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local powerValue = player:WaitForChild("Backpack"):WaitForChild("ActionValues"):WaitForChild("Power")
-
-local previousPower = powerValue.Value
 local hasTriggered = false
 local shotType = nil
 local dunkType = nil
 local currentEvent = nil
-
+local lastPower = powerValue.Value
+-- Flag so only the script can fire the release
+local scriptFiring = false
 -- PERFECT GREEN POWER VALUES
 local shotTargetPower = {
-    ["Standing Shot"] = 68.75,
-    ["Moving Shot"] = 63,
-    ["Close Floater"] = 67,
-    ["Floater"] = 67,
-    ["Layup"] = 62,
-    ["Standing Layup"] = 66,
-    ["Reverse Layup"] = 67.5,
-    ["Close Layup"] = 68,
-    ["Moving Dunk"] = 67.5,
-    ["Standing Dunk"] = 67.5,
-    ["Close Post Fade"] = 71,
-    ["Post Fade"] = 71
+    ["Standing Shot"]   = 68,
+    ["Moving Shot"]     = 62,
+    ["Close Floater"]   = 58,
+    ["Floater"]         = 62,
+    ["Layup"]           = 62,
+    ["Standing Layup"]  = 60,
+    ["Reverse Layup"]   = 65,
+    ["Close Layup"]     = 65,
+    ["Moving Dunk"]     = 65,
+    ["Standing Dunk"]   = 65,
+    ["Close Post Fade"] = 65,
+    ["Post Fade"]       = 62
 }
-
 --========================================================--
 -- AUTO GREEN LOGIC
 --========================================================--
@@ -72,63 +73,72 @@ local __namecall
 __namecall = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
-
     if method == "FireServer" and #args >= 2 then
+        -- Detect start of shot / dunk
         if args[1] == true then
             if args[3] and type(args[3]) == "string" and shotTargetPower[args[3]] then
                 shotType = args[3]
                 dunkType = nil
                 hasTriggered = false
-                previousPower = powerValue.Value
                 currentEvent = self
             elseif args[2] and type(args[2]) == "string" and shotTargetPower[args[2]] then
                 dunkType = args[2]
                 shotType = nil
                 hasTriggered = false
-                previousPower = powerValue.Value
                 currentEvent = self
             end
+        end
+        -- Block the game from releasing (args[1] == false) only when Auto Green is enabled
+        if args[1] == false and not scriptFiring and Toggles.AutoGreen.Value then
+            return
         end
     end
     return __namecall(self, ...)
 end)
-
-powerValue.Changed:Connect(function(newValue)
+-- Heartbeat loop
+RunService.Heartbeat:Connect(function()
     if not Toggles.AutoGreen.Value then
-        previousPower = newValue
+        lastPower = powerValue.Value
         return
     end
-
-    local increasing = newValue > previousPower
+    local currentPower = powerValue.Value
     local currentShot = shotType or dunkType
-
-    if currentShot and not hasTriggered and increasing and currentEvent then
-        local target = shotTargetPower[currentShot]
-
-        if newValue >= target then
+    if currentShot and not hasTriggered and currentEvent then
+        local target = shotTargetPower[currentShot] - Options.Offset.Value
+        if currentPower >= target then
             hasTriggered = true
+            -- Allow only the script to fire
+            scriptFiring = true
             if dunkType then
                 currentEvent:FireServer(false, dunkType, 1)
             elseif shotType then
                 currentEvent:FireServer(false, "Shooting", shotType)
             end
+            scriptFiring = false
         end
     end
-
-    if newValue < previousPower and newValue <= 20 then
+    -- Reset when power drops
+    if currentPower < lastPower and currentPower <= 20 then
         shotType = nil
         dunkType = nil
         hasTriggered = false
         currentEvent = nil
     end
-
-    previousPower = newValue
+    lastPower = currentPower
 end)
-
 --========================================================--
 -- UI SETTINGS
 --========================================================--
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
+
+-- Add this toggle
+MenuGroup:AddToggle("ShowCustomCursor", {
+    Text = "Custom Cursor",
+    Default = true, -- or false if you want it off by default
+    Callback = function(Value)
+        Library.ShowCustomCursor = Value
+    end,
+})
 
 MenuGroup:AddLabel("Menu bind")
     :AddKeyPicker("MenuKeybind", {
@@ -140,9 +150,7 @@ MenuGroup:AddLabel("Menu bind")
 MenuGroup:AddButton("Unload", function()
     Library:Unload()
 end)
-
 Library.ToggleKeybind = Library.Options.MenuKeybind
-
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
